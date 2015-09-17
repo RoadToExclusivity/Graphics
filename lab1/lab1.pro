@@ -11,14 +11,18 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = lab1
 TEMPLATE = app
 
+CONFIG += c++11
 
 SOURCES += main.cpp\
         mainwindow.cpp \
     language.cpp \
-    languagemodel.cpp
+    languagemodel.cpp \
+    newrowdialog.cpp
 
 HEADERS  += mainwindow.h \
     language.h \
-    languagemodel.h
+    languagemodel.h \
+    newrowdialog.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    newrowdialog.ui
