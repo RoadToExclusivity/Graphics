@@ -65,8 +65,19 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
 {
     if (index.isValid() && role == Qt::EditRole)
     {
-        auto pp = &value;
-        m_data.replace(index.row(), qvariant_cast<Language>(value));
+        auto language = m_data[index.row()].GetLanguage();
+        auto population = m_data[index.row()].GetPopulation();
+        Language newLang;
+        if (index.column() == 0)
+        {
+            newLang = Language(value.toString(), population);
+        }
+        else
+        {
+            newLang = Language(language, value.value<unsigned int>());
+        }
+
+        m_data.replace(index.row(), newLang);
         emit dataChanged(index, index);
         return true;
     }

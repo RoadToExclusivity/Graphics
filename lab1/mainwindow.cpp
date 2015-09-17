@@ -3,6 +3,7 @@
 #include "qdebug.h"
 #include <QAbstractItemModel>
 #include "newrowdialog.h"
+#include "aboutdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -47,4 +48,11 @@ void MainWindow::resizeEvent(QResizeEvent*)
 void MainWindow::on_actionExit_triggered()
 {
     QApplication::quit();
+}
+
+void MainWindow::on_actionAbout_creator_triggered()
+{
+    AboutDialog dialog;
+    dialog.setModal(true);
+    dialog.exec();
 }

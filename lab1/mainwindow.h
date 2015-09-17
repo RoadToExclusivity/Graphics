@@ -23,6 +23,8 @@ private slots:
 
     void on_actionExit_triggered();
 
+    void on_actionAbout_creator_triggered();
+
 protected:
     virtual void resizeEvent(QResizeEvent *);
 

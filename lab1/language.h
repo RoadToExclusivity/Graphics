@@ -16,6 +16,5 @@ private:
     unsigned int m_population;
 };
 
-Q_DECLARE_METATYPE(Language);
-
+//Q_DECLARE_METATYPE(Language);
 #endif // LANGUAGE_H

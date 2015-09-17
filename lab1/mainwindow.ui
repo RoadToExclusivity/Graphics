@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>475</width>
+    <height>366</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,7 +39,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
+     <width>475</width>
      <height>21</height>
     </rect>
    </property>
@@ -55,8 +55,15 @@
     </property>
     <addaction name="actionInsert_row"/>
    </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+    <addaction name="actionAbout_creator"/>
+   </widget>
    <addaction name="menuDsfd"/>
    <addaction name="menuInsert"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -75,6 +82,11 @@
   <action name="actionInsert_row">
    <property name="text">
     <string>Insert row</string>
+   </property>
+  </action>
+  <action name="actionAbout_creator">
+   <property name="text">
+    <string>About creator</string>
    </property>
   </action>
  </widget>

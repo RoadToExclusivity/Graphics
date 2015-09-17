@@ -17,12 +17,15 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     language.cpp \
     languagemodel.cpp \
-    newrowdialog.cpp
+    newrowdialog.cpp \
+    aboutdialog.cpp
 
 HEADERS  += mainwindow.h \
     language.h \
     languagemodel.h \
-    newrowdialog.h
+    newrowdialog.h \
+    aboutdialog.h
 
 FORMS    += mainwindow.ui \
-    newrowdialog.ui
+    newrowdialog.ui \
+    aboutdialog.ui
