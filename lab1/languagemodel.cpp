@@ -84,3 +84,11 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
 
     return false;
 }
+
+void LanguageModel::clear()
+{
+    this->beginRemoveRows(QModelIndex(), 0, m_data.count());
+    removeRows(0, m_data.count());
+    endRemoveRows();
+    m_data.clear();
+}
