@@ -35,12 +35,14 @@ private slots:
 
 protected:
     virtual void resizeEvent(QResizeEvent *);
+    virtual void closeEvent(QCloseEvent *);
 
 private:
     void NewFile();
-    bool OpenFile(const QString& fileName);
-    void SaveFile();
-//    void SaveAsFile(const QString* fileName);
+    void OpenFile();
+    void SaveFile(QString newFilePath = "");
+    void SaveAsFile();
+    bool PromptToSave();
 
     Ui::MainWindow *ui;
     LanguageModel *model;
@@ -49,8 +51,6 @@ private:
 
     QString fileName;
     QString filePath;
-
-    bool wasChanged;
 };
 
 #endif // MAINWINDOW_H

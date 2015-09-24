@@ -1,0 +1,14 @@
+INPUT(
+./release\main.o
+./release\mainwindow.o
+./release\language.o
+./release\languagemodel.o
+./release\newrowdialog.o
+./release\aboutdialog.o
+./release\aboutwidget.o
+./release\painter.o
+./release\moc_mainwindow.o
+./release\moc_newrowdialog.o
+./release\moc_aboutdialog.o
+./release\moc_aboutwidget.o
+);

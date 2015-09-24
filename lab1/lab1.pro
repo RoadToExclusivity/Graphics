@@ -18,13 +18,17 @@ SOURCES += main.cpp\
     language.cpp \
     languagemodel.cpp \
     newrowdialog.cpp \
-    aboutdialog.cpp
+    aboutdialog.cpp \
+    aboutwidget.cpp \
+    painter.cpp
 
 HEADERS  += mainwindow.h \
     language.h \
     languagemodel.h \
     newrowdialog.h \
-    aboutdialog.h
+    aboutdialog.h \
+    aboutwidget.h \
+    painter.h
 
 FORMS    += mainwindow.ui \
     newrowdialog.ui \

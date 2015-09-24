@@ -1,0 +1,12 @@
+{
+    "Language": [
+        "ADSDASDSDASD",
+        "qqqq",
+        "qqqwewewewe"
+    ],
+    "Population": [
+        3,
+        5,
+        732
+    ]
+}

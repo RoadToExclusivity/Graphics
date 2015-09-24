@@ -2,6 +2,7 @@
 #define ABOUTDIALOG_H
 
 #include <QDialog>
+#include "painter.h"
 
 namespace Ui {
 class AboutDialog;
@@ -20,6 +21,7 @@ private slots:
 
 private:
     Ui::AboutDialog *ui;
+    Painter m_painter;
 };
 
 #endif // ABOUTDIALOG_H

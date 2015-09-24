@@ -18,6 +18,7 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     void clear();
 
+    bool wasChanged;
 private:
     QList<Language> m_data;
 };

@@ -1,7 +1,7 @@
 #include "languagemodel.h"
 
 LanguageModel::LanguageModel(QObject *parent) :
-       QAbstractTableModel(parent)
+       QAbstractTableModel(parent), wasChanged(false)
 {
 }
 
@@ -49,6 +49,8 @@ void LanguageModel::append(const Language &lang)
     beginInsertRows(QModelIndex(), m_data.count(), m_data.count());
     m_data.append(lang);
     endInsertRows();
+
+    wasChanged = true;
 }
 
 Qt::ItemFlags LanguageModel::flags(const QModelIndex &index) const
@@ -70,11 +72,28 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
         Language newLang;
         if (index.column() == 0)
         {
-            newLang = Language(value.toString(), population);
+            if (value.toString().length() == 0)
+            {
+                return false;
+            }
+
+            auto newLanguage = value.toString();
+            if (language != newLanguage)
+            {
+                wasChanged = true;
+            }
+
+            newLang = Language(newLanguage, population);
         }
         else
         {
-            newLang = Language(language, value.value<unsigned int>());
+            unsigned int newPop = value.value<unsigned int>();
+            if (population != newPop)
+            {
+                wasChanged = true;
+            }
+
+            newLang = Language(language, newPop);
         }
 
         m_data.replace(index.row(), newLang);
@@ -87,8 +106,10 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
 
 void LanguageModel::clear()
 {
-    this->beginRemoveRows(QModelIndex(), 0, m_data.count());
+    beginResetModel();
     removeRows(0, m_data.count());
-    endRemoveRows();
+    endResetModel();
+
     m_data.clear();
+    wasChanged = true;
 }

@@ -7,14 +7,15 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     fileName("untitled"),
-    filePath(""),
-    wasChanged(false)
+    filePath("")
 {
     ui->setupUi(this);
     ui->table->move(0, 0);
@@ -24,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->table->horizontalHeader()->setStretchLastSection(true);
 
-    this->setWindowTitle(APP_NAME + " - " + fileName);
+    setWindowTitle(APP_NAME + " - " + fileName);
 }
 
 MainWindow::~MainWindow()
@@ -45,7 +46,6 @@ void MainWindow::on_actionInsert_row_triggered()
     if (res == dialog.Accepted)
     {
         model->append(dialog.NewLanguage);
-        wasChanged = true;
     }
 }
 
@@ -53,6 +53,17 @@ void MainWindow::resizeEvent(QResizeEvent*)
 {
     ui->table->resize(size());
     ui->table->setColumnWidth(0, ui->table->width() / 2);
+}
+
+void MainWindow::closeEvent(QCloseEvent*)
+{
+    if (model->wasChanged)
+    {
+        if (PromptToSave())
+        {
+            SaveFile();
+        }
+    }
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -69,29 +80,139 @@ void MainWindow::on_actionAbout_creator_triggered()
 
 void MainWindow::NewFile()
 {
-    if (wasChanged)
+    if (model->wasChanged)
     {
-
+        if (PromptToSave())
+        {
+            if (filePath == "")
+            {
+                SaveAsFile();
+            }
+            else
+            {
+                SaveFile();
+            }
+        }
     }
 
     fileName = "untitled";
     filePath = "";
-    this->setWindowTitle(APP_NAME + " - " + fileName);
+    setWindowTitle(APP_NAME + " - " + fileName);
     model->clear();
+    model->wasChanged = false;
 }
 
-bool MainWindow::OpenFile(const QString& fileName)
+void MainWindow::OpenFile()
 {
-    QFile file(fileName);
-    file.open(QIODevice::ReadOnly, QIODevice::Text);
+    if (model->wasChanged)
+    {
+        if (PromptToSave())
+        {
+            SaveFile();
+        }
+    }
+
+    auto newFileName = QFileDialog::getOpenFileName(this, tr("Open file"));
+    if (newFileName == "")
+    {
+        return;
+    }
+
+    QFile file(newFileName);
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (!file.isOpen())
+    {
+        return;
+    }
 
     QString data = file.readAll();
     file.close();
 
     QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
-    auto items = doc.object();
+    if (doc.isNull())
+    {
+        return;
+    }
 
-    return true;
+    auto items = doc.object();
+    QJsonArray langs = items.value("Language").toArray();
+    QJsonArray population = items.value("Population").toArray();
+
+    if (langs.size() != population.size())
+    {
+        QMessageBox::warning(this, tr("Error"), tr("File is corrupted"));
+        return;
+    }
+    model->clear();
+
+    for (int i = 0; i < langs.size(); ++i)
+    {
+        Language lang(langs[i].toString(), population[i].toInt());
+        model->append(lang);
+    }
+
+    filePath = newFileName;
+    fileName = newFileName;
+    setWindowTitle(APP_NAME + " - " + fileName);
+    model->wasChanged = false;
+}
+
+void MainWindow::SaveFile(QString newFilePath)
+{
+    if (model->wasChanged || newFilePath != "")
+    {
+        if (filePath == "" && newFilePath == "")
+        {
+            SaveAsFile();
+            return;
+        }
+
+        if (newFilePath == "")
+        {
+            newFilePath = filePath;
+        }
+
+        QFile file(newFilePath);
+        file.open(QFile::WriteOnly | QFile::Text | QFile::Truncate);
+
+        QJsonObject obj;
+        QJsonArray langs, pops;
+        for (int i = 0; i < model->rowCount(QModelIndex()); ++i)
+        {
+            auto indexLang = model->index(i, 0);
+            auto indexPop = model->index(i, 1);
+            langs.append(model->data(indexLang, Qt::DisplayRole).toString());
+            pops.append(model->data(indexPop, Qt::DisplayRole).toInt());
+        }
+
+        obj["Language"] = langs;
+        obj["Population"] = pops;
+
+        QJsonDocument doc(obj);
+        file.write(doc.toJson());
+        file.close();
+
+        filePath = newFilePath;
+        fileName = filePath;
+        setWindowTitle(APP_NAME + " - " + fileName);
+        model->wasChanged = false;
+        //ui->actionSave->setEnabled(false);
+    }
+}
+
+void MainWindow::SaveAsFile()
+{
+    auto newFilePath = QFileDialog::getSaveFileName(this, tr("Save file"));
+    if (newFilePath != "")
+    {
+        SaveFile(newFilePath);
+    }
+}
+
+bool MainWindow::PromptToSave()
+{
+    auto ans = QMessageBox::question(this, tr("Save file ?"), tr("Do you want to save file ?"), QMessageBox::Yes | QMessageBox::No);
+    return (ans == QMessageBox::Yes);
 }
 
 void MainWindow::on_actionNew_triggered()
@@ -101,19 +222,15 @@ void MainWindow::on_actionNew_triggered()
 
 void MainWindow::on_actionOpen_triggered()
 {
-    auto fileName = QFileDialog::getOpenFileName(this, tr("Open file"));
-    OpenFile(fileName);
+    OpenFile();
 }
 
 void MainWindow::on_actionSave_triggered()
 {
-    if (filePath == "")
-    {
-
-    }
+    SaveFile();
 }
 
 void MainWindow::on_actionSave_as_triggered()
 {
-
+    SaveAsFile();
 }
