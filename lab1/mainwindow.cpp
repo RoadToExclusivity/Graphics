@@ -15,17 +15,19 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     fileName("untitled"),
-    filePath("")
+    filePath(""),
+    stack(new QUndoStack(this))
 {
     ui->setupUi(this);
     ui->table->move(0, 0);
 
-    model = new LanguageModel(this);
+    model = new LanguageModel(stack, ui->actionSave, this);
     ui->table->setModel(model);
 
     ui->table->horizontalHeader()->setStretchLastSection(true);
 
     setWindowTitle(APP_NAME + " - " + fileName);
+    ui->actionSave->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -100,6 +102,8 @@ void MainWindow::NewFile()
     setWindowTitle(APP_NAME + " - " + fileName);
     model->clear();
     model->wasChanged = false;
+
+    stack->clear();
 }
 
 void MainWindow::OpenFile()
@@ -155,6 +159,8 @@ void MainWindow::OpenFile()
     fileName = newFileName;
     setWindowTitle(APP_NAME + " - " + fileName);
     model->wasChanged = false;
+    ui->actionSave->setEnabled(false);
+    stack->clear();
 }
 
 void MainWindow::SaveFile(QString newFilePath)
@@ -170,6 +176,11 @@ void MainWindow::SaveFile(QString newFilePath)
         if (newFilePath == "")
         {
             newFilePath = filePath;
+        }
+
+        if (QFileInfo(newFilePath).completeSuffix() != "json")
+        {
+            newFilePath += ".json";
         }
 
         QFile file(newFilePath);
@@ -196,13 +207,13 @@ void MainWindow::SaveFile(QString newFilePath)
         fileName = filePath;
         setWindowTitle(APP_NAME + " - " + fileName);
         model->wasChanged = false;
-        //ui->actionSave->setEnabled(false);
+        ui->actionSave->setEnabled(false);
     }
 }
 
 void MainWindow::SaveAsFile()
 {
-    auto newFilePath = QFileDialog::getSaveFileName(this, tr("Save file"));
+    auto newFilePath = QFileDialog::getSaveFileName(this, tr("Save file"), QString(), "*.json");
     if (newFilePath != "")
     {
         SaveFile(newFilePath);
@@ -233,4 +244,14 @@ void MainWindow::on_actionSave_triggered()
 void MainWindow::on_actionSave_as_triggered()
 {
     SaveAsFile();
+}
+
+void MainWindow::on_actionUndo_triggered()
+{
+    stack->undo();
+}
+
+void MainWindow::on_actionRedo_triggered()
+{
+    stack->redo();
 }

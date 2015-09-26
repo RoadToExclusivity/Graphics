@@ -5,6 +5,7 @@
 #include <QTableView>
 #include <QStandardItemModel>
 #include "languagemodel.h"
+#include <QUndoStack>
 
 namespace Ui {
 class MainWindow;
@@ -33,6 +34,10 @@ private slots:
 
     void on_actionSave_as_triggered();
 
+    void on_actionUndo_triggered();
+
+    void on_actionRedo_triggered();
+
 protected:
     virtual void resizeEvent(QResizeEvent *);
     virtual void closeEvent(QCloseEvent *);
@@ -51,6 +56,8 @@ private:
 
     QString fileName;
     QString filePath;
+
+    QUndoStack *stack;
 };
 
 #endif // MAINWINDOW_H

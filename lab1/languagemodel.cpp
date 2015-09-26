@@ -1,7 +1,9 @@
 #include "languagemodel.h"
+#include "editcommand.h"
+#include <QAction>
 
-LanguageModel::LanguageModel(QObject *parent) :
-       QAbstractTableModel(parent), wasChanged(false)
+LanguageModel::LanguageModel(QUndoStack *stack, QAction *save,QObject *parent) :
+       QAbstractTableModel(parent), wasChanged(false), m_stack(stack), m_save(save)
 {
 }
 
@@ -51,6 +53,7 @@ void LanguageModel::append(const Language &lang)
     endInsertRows();
 
     wasChanged = true;
+    m_save->setEnabled(true);
 }
 
 Qt::ItemFlags LanguageModel::flags(const QModelIndex &index) const
@@ -81,6 +84,7 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
             if (language != newLanguage)
             {
                 wasChanged = true;
+                m_save->setEnabled(true);
             }
 
             newLang = Language(newLanguage, population);
@@ -91,6 +95,7 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
             if (population != newPop)
             {
                 wasChanged = true;
+                m_save->setEnabled(true);
             }
 
             newLang = Language(language, newPop);
@@ -106,10 +111,19 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
 
 void LanguageModel::clear()
 {
-    beginResetModel();
-    removeRows(0, m_data.count());
-    endResetModel();
-
     m_data.clear();
+    layoutChanged();
+
     wasChanged = true;
+    m_save->setEnabled(true);
+}
+
+void LanguageModel::insert(const Language &language, int index)
+{
+
+}
+
+void LanguageModel::remove(int index)
+{
+
 }

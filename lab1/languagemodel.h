@@ -4,16 +4,19 @@
 #include <QAbstractTableModel>
 #include <QList>
 #include "language.h"
+#include <QUndoStack>
 
 class LanguageModel : public QAbstractTableModel
 {
 public:
-    LanguageModel(QObject *parent = 0);
+    LanguageModel(QUndoStack *stack, QAction *save, QObject *parent = 0);
     int rowCount(const QModelIndex &) const;
     int columnCount(const QModelIndex &) const;
     QVariant data(const QModelIndex &index, int role) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     void append(const Language &language);
+    void insert(const Language &language, int index);
+    void remove(int index);
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     void clear();
@@ -21,6 +24,8 @@ public:
     bool wasChanged;
 private:
     QList<Language> m_data;
+    QUndoStack *m_stack;
+    QAction *m_save;
 };
 
 #endif // LANGUAGEMODEL_H
