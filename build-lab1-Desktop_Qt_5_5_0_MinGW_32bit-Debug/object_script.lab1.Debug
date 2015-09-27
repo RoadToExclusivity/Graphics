@@ -7,6 +7,7 @@ INPUT(
 ./debug\aboutdialog.o
 ./debug\aboutwidget.o
 ./debug\painter.o
+./debug\editcommand.o
 ./debug\moc_mainwindow.o
 ./debug\moc_newrowdialog.o
 ./debug\moc_aboutdialog.o

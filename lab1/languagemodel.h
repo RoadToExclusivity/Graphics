@@ -15,8 +15,9 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     void append(const Language &language);
-    void insert(const Language &language, int index);
-    void remove(int index);
+    void InsertLast(const Language &language);
+    void RemoveLast();
+    void ChangeData(const QModelIndex &indexRow, const QModelIndex &indexCol, const Language &lang);
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     void clear();

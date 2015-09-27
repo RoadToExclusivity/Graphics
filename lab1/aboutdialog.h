@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include "painter.h"
+#include <QTimer>
 
 namespace Ui {
 class AboutDialog;
@@ -16,11 +17,9 @@ public:
     explicit AboutDialog(QWidget *parent = 0);
     ~AboutDialog();
 
-private slots:
-    void on_pushButton_clicked();
-
 private:
     Ui::AboutDialog *ui;
+    QTimer *m_timer;
     Painter m_painter;
 };
 

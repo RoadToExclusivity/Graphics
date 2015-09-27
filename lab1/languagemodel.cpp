@@ -40,20 +40,15 @@ QVariant LanguageModel::headerData(int section, Qt::Orientation orientation, int
 
     switch (section)
     {
-        case 0: return "Language";
-        case 1: return "Population";
+        case 0: return tr("Language");
+        case 1: return tr("Population");
         default: return QVariant();
     }
 }
 
 void LanguageModel::append(const Language &lang)
 {
-    beginInsertRows(QModelIndex(), m_data.count(), m_data.count());
-    m_data.append(lang);
-    endInsertRows();
-
-    wasChanged = true;
-    m_save->setEnabled(true);
+    m_stack->push(new EditCommand(this, 0, lang, true));
 }
 
 Qt::ItemFlags LanguageModel::flags(const QModelIndex &index) const
@@ -86,6 +81,10 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
                 wasChanged = true;
                 m_save->setEnabled(true);
             }
+            else
+            {
+                return true;
+            }
 
             newLang = Language(newLanguage, population);
         }
@@ -97,12 +96,17 @@ bool LanguageModel::setData(const QModelIndex &index, const QVariant &value, int
                 wasChanged = true;
                 m_save->setEnabled(true);
             }
+            else
+            {
+                return true;
+            }
 
             newLang = Language(language, newPop);
         }
 
-        m_data.replace(index.row(), newLang);
-        emit dataChanged(index, index);
+        m_stack->push(new EditCommand(this, index.row(), newLang, false));
+        //m_data.replace(index.row(), newLang);
+        //emit dataChanged(index, index);
         return true;
     }
 
@@ -118,12 +122,33 @@ void LanguageModel::clear()
     m_save->setEnabled(true);
 }
 
-void LanguageModel::insert(const Language &language, int index)
+void LanguageModel::InsertLast(const Language &language)
 {
+    beginInsertRows(QModelIndex(), m_data.count(), m_data.count());
+    m_data.append(language);
+    endInsertRows();
 
+    wasChanged = true;
+    m_save->setEnabled(true);
 }
 
-void LanguageModel::remove(int index)
+void LanguageModel::RemoveLast()
 {
+    beginRemoveRows(QModelIndex(), 0, m_data.count());
+    m_data.removeLast();
+    endRemoveRows();
+    layoutChanged();
 
+    wasChanged = true;
+    m_save->setEnabled(true);
+}
+
+void LanguageModel::ChangeData(const QModelIndex &indexRow, const QModelIndex &indexCol, const Language &lang)
+{
+    m_data.replace(indexRow.row(), lang);
+    emit dataChanged(indexRow, indexRow);
+    emit dataChanged(indexCol, indexCol);
+
+    wasChanged = true;
+    m_save->setEnabled(true);
 }

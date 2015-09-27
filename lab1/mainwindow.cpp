@@ -28,6 +28,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle(APP_NAME + " - " + fileName);
     ui->actionSave->setEnabled(false);
+
+    stack->clear();
+    connect(stack, SIGNAL(canUndoChanged(bool)), ui->actionUndo, SLOT(setEnabled(bool)));
+    connect(stack, SIGNAL(canRedoChanged(bool)), ui->actionRedo, SLOT(setEnabled(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -37,6 +41,11 @@ MainWindow::~MainWindow()
     if (model)
     {
         delete model;
+    }
+
+    if (stack)
+    {
+        delete stack;
     }
 }
 
@@ -97,7 +106,7 @@ void MainWindow::NewFile()
         }
     }
 
-    fileName = "untitled";
+    fileName = tr("untitled");
     filePath = "";
     setWindowTitle(APP_NAME + " - " + fileName);
     model->clear();
@@ -116,7 +125,7 @@ void MainWindow::OpenFile()
         }
     }
 
-    auto newFileName = QFileDialog::getOpenFileName(this, tr("Open file"));
+    auto newFileName = QFileDialog::getOpenFileName(this, tr("Open file"), QString(), "*.json");
     if (newFileName == "")
     {
         return;

@@ -52,7 +52,7 @@ private:
     Ui::MainWindow *ui;
     LanguageModel *model;
 
-    const QString APP_NAME = "Language statistics";
+    const QString APP_NAME = tr("Language statistics");
 
     QString fileName;
     QString filePath;

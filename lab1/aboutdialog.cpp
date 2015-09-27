@@ -7,7 +7,8 @@
 AboutDialog::AboutDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AboutDialog),
-    m_painter(size().height())
+    m_painter(343),
+    m_timer(new QTimer(this))
 {
     ui->setupUi(this);
     setFixedSize(size());
@@ -16,17 +17,16 @@ AboutDialog::AboutDialog(QWidget *parent) :
     QGridLayout *layout = new QGridLayout();
     layout->addWidget(widget, 0, 0);
 
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), widget, SLOT(animate()));
-    timer->start(50);
+    connect(m_timer, SIGNAL(timeout()), widget, SLOT(animate()));
+    m_timer->start(33);
 }
 
 AboutDialog::~AboutDialog()
 {
     delete ui;
-}
 
-void AboutDialog::on_pushButton_clicked()
-{
-    close();
+    if (m_timer)
+    {
+        delete m_timer;
+    }
 }

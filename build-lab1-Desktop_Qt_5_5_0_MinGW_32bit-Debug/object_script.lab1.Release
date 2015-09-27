@@ -7,6 +7,7 @@ INPUT(
 ./release\aboutdialog.o
 ./release\aboutwidget.o
 ./release\painter.o
+./release\editcommand.o
 ./release\moc_mainwindow.o
 ./release\moc_newrowdialog.o
 ./release\moc_aboutdialog.o
