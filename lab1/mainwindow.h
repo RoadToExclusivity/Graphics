@@ -38,6 +38,8 @@ private slots:
 
     void on_actionRedo_triggered();
 
+    void on_actionShow_diagram_triggered();
+
 protected:
     virtual void resizeEvent(QResizeEvent *);
     virtual void closeEvent(QCloseEvent *);

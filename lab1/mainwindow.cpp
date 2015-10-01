@@ -10,6 +10,7 @@
 #include <QJsonArray>
 #include <QFileDialog>
 #include <QMessageBox>
+#include "diagram.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -263,4 +264,11 @@ void MainWindow::on_actionUndo_triggered()
 void MainWindow::on_actionRedo_triggered()
 {
     stack->redo();
+}
+
+void MainWindow::on_actionShow_diagram_triggered()
+{
+    Diagram dialog(model, this);
+    dialog.setModal(true);
+    dialog.exec();
 }

@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     aboutdialog.cpp \
     aboutwidget.cpp \
     painter.cpp \
-    editcommand.cpp
+    editcommand.cpp \
+    diagram.cpp
 
 HEADERS  += mainwindow.h \
     language.h \
@@ -31,8 +32,10 @@ HEADERS  += mainwindow.h \
     aboutdialog.h \
     aboutwidget.h \
     painter.h \
-    editcommand.h
+    editcommand.h \
+    diagram.h
 
 FORMS    += mainwindow.ui \
     newrowdialog.ui \
-    aboutdialog.ui
+    aboutdialog.ui \
+    diagram.ui
