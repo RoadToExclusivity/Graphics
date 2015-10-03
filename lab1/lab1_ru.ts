@@ -10,6 +10,14 @@
     </message>
 </context>
 <context>
+    <name>Diagram</name>
+    <message>
+        <location filename="diagram.ui" line="14"/>
+        <source>Diagram</source>
+        <translation>Диаграмма</translation>
+    </message>
+</context>
+<context>
     <name>LanguageModel</name>
     <message>
         <location filename="languagemodel.cpp" line="43"/>
@@ -35,127 +43,141 @@
         <translation>Файл</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="58"/>
         <source>Insert</source>
-        <translation>Вставка</translation>
+        <translation type="vanished">Вставка</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="67"/>
+        <location filename="mainwindow.ui" line="58"/>
+        <source>Edit</source>
+        <translation>Правка</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="69"/>
         <source>About</source>
         <translation>Справка</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="86"/>
+        <location filename="mainwindow.ui" line="88"/>
         <source>Exit</source>
         <translation>Выход</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="91"/>
+        <location filename="mainwindow.ui" line="93"/>
         <source>Insert row</source>
         <translation>Вставить строку</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="96"/>
+        <location filename="mainwindow.ui" line="98"/>
         <source>About creator</source>
         <translation>О разработчике</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="101"/>
+        <location filename="mainwindow.ui" line="103"/>
         <source>New</source>
         <translation>Новый</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="104"/>
+        <location filename="mainwindow.ui" line="106"/>
         <source>Ctrl+N</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="109"/>
+        <location filename="mainwindow.ui" line="111"/>
         <source>Open</source>
         <translation>Открыть</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="112"/>
+        <location filename="mainwindow.ui" line="114"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="117"/>
+        <location filename="mainwindow.ui" line="119"/>
         <source>Save</source>
         <translation>Сохранить</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="120"/>
+        <location filename="mainwindow.ui" line="122"/>
         <source>Ctrl+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="125"/>
+        <location filename="mainwindow.ui" line="127"/>
         <source>Save as</source>
         <translation>Сохранить как</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="128"/>
+        <location filename="mainwindow.ui" line="130"/>
         <source>Ctrl+Shift+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="133"/>
+        <location filename="mainwindow.ui" line="138"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="136"/>
+        <location filename="mainwindow.ui" line="141"/>
         <source>Ctrl+Z</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="141"/>
+        <location filename="mainwindow.ui" line="149"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="144"/>
+        <location filename="mainwindow.ui" line="152"/>
         <source>Ctrl+Y</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="100"/>
+        <location filename="mainwindow.ui" line="157"/>
+        <source>Show diagram</source>
+        <translation>Создать диаграмму</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="160"/>
+        <source>Ctrl+D</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="110"/>
         <source>untitled</source>
         <translation>безымянный</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="119"/>
+        <location filename="mainwindow.cpp" line="129"/>
         <source>Open file</source>
         <translation>Открыть файл</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
+        <location filename="mainwindow.cpp" line="157"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
+        <location filename="mainwindow.cpp" line="157"/>
         <source>File is corrupted</source>
         <translation>Файл поврежден</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="216"/>
+        <location filename="mainwindow.cpp" line="226"/>
         <source>Save file</source>
         <translation>Сохранить файл</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="225"/>
+        <location filename="mainwindow.cpp" line="235"/>
         <source>Save file ?</source>
         <translation>Сохранить файл ?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="225"/>
+        <location filename="mainwindow.cpp" line="235"/>
         <source>Do you want to save file ?</source>
         <translation>Вы хотите сохранить файл ?</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="55"/>
+        <location filename="mainwindow.h" line="57"/>
         <source>Language statistics</source>
         <translation>Статистика по языкам</translation>
     </message>
@@ -164,8 +186,8 @@
     <name>NewRowDialog</name>
     <message>
         <location filename="newrowdialog.ui" line="14"/>
-        <source>Dialog</source>
-        <translation></translation>
+        <source>Add language</source>
+        <translation>Добавить язык</translation>
     </message>
     <message>
         <location filename="newrowdialog.ui" line="64"/>

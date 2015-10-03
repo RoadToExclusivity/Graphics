@@ -14,7 +14,14 @@ Diagram::Diagram(LanguageModel *model, QWidget *parent) :
     langs(),
     maxPopulation(0),
     m_usedColors(),
-    m_needRefresh(true)
+    m_needRefresh(true),
+    m_angleOffset(0),
+    lastArcPoint(),
+    m_isLeftPressed(false),
+    m_isRightPressed(false),
+    m_needAuto(true),
+    m_startAngleMouseDrag(0),
+    m_startYSize(0)
 {
     ui->setupUi(this);
     setFixedSize(size());
@@ -27,6 +34,17 @@ Diagram::Diagram(LanguageModel *model, QWidget *parent) :
         maxPopulation += lang.GetPopulation();
         langs.push_back(lang);
     }
+
+    sizeY = 250;
+    m_startYSize = 250;
+    offsetY = 250 - (sizeY - HEIGHT)/ 2;
+    centerX = OFFSET_X + SIZE_X / 2.0;
+    centerY = offsetY + sizeY / 2.0;
+    lastArcPoint = QPointF(centerX + SIZE_X / 2, centerY);
+
+    m_timer = new QTimer(this);
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
+    m_timer->start(100);
 }
 
 Diagram::~Diagram()
@@ -34,120 +52,81 @@ Diagram::~Diagram()
     delete ui;
 }
 
+void Diagram::animate()
+{
+    if (m_needAuto)
+    {
+        m_angleOffset += 10;
+        if (m_angleOffset >= 360)
+        {
+            m_angleOffset -= 360;
+        }
+    }
+    this->repaint();
+}
+
 void Diagram::paintEvent(QPaintEvent *event)
 {
-    //if (m_needRefresh)
+    QDialog::paintEvent(event);
+
+    QPainter painter(this);
+    float offset = 0;
+
+    std::vector<QColor> curUsedColors;
+    float curAngles = m_angleOffset;
+    QPainterPath testPath;
+    testPath.moveTo(QPointF(centerX + SIZE_X / 2, centerY));
+    testPath.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), 0, curAngles);
+    lastArcPoint = testPath.currentPosition();
+    for (size_t i = 0; i < langs.size(); ++i)
     {
-        QDialog::paintEvent(event);
+        QBrush brush(m_needRefresh ? NextColor() : m_usedColors[i]);
+        painter.setBrush(brush);
+        curUsedColors.push_back(brush.color());
+        m_usedColors.push_back(brush.color());
 
-        QPainter painter(this);
-        //QBrush brush(QColor(150, 120, 200));
-        float offset = 0;
-        const int SIZE_X = 500, HEIGHT = 30, OFFSET_X = 300 - SIZE_X / 2;
-        int sizeY = 250, offsetY = 250 - (sizeY - HEIGHT)/ 2;
-        float centerX = OFFSET_X + SIZE_X / 2.0, centerY = offsetY + sizeY / 2.0;
-        std::vector<QColor> curUsedColors;
-        float curAngles = 0;
-        QPointF lastArcPoint(centerX + SIZE_X / 2, centerY);
-        for (size_t i = 0; i < langs.size(); ++i)
+        float curAngle = 360.0 * langs[i].GetPopulation() / maxPopulation;
+        float phi = curAngles * PI / 180.0, phiNew = (curAngles + curAngle) * PI / 180.0;
+
+        QPainterPath path;
+        path.moveTo(lastArcPoint);
+        path.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), curAngles, curAngle);
+        auto start = path.currentPosition();
+        lastArcPoint = start;
+        path.arcTo(QRectF(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY), curAngles + curAngle, -curAngle);
+        start = path.currentPosition();
+        path.lineTo(start.x(), start.y() + HEIGHT);
+        painter.drawPath(path);
+
+        if (phi < PI && phiNew > PI)
         {
-            QBrush brush(m_needRefresh ? NextColor() : m_usedColors[i]);
-            painter.setBrush(brush);
-            curUsedColors.push_back(brush.color());
             QPainterPath path;
-
-            float curAngle = 360.0 * langs[i].GetPopulation() / maxPopulation;
-    //        float e = 1 - 1.0 * sizeY * sizeY / (SIZE_X * SIZE_X);
-            float phi = curAngles * PI / 180.0, phiNew = (curAngles + curAngle) * PI / 180.0;
-    //        float a = SIZE_X / 2.0, b = sizeY / 2.0;
-    //        float x = (1.0 * a * b ) / sqrtf(1.0 * b * b + 1.0 * a * a * tanf(phi) * tanf(phi));
-
-
-    //        if (phi > PI / 2.0 && phi < 3 * PI / 2.0)
-    //        {
-    //            x = -x;
-    //        }
-    //        float y = (1.0 * a * b ) / sqrtf(1.0 * a * a + 1.0 * b * b /(tanf(phi) * tanf(phi)));
-    //        if (phi > PI)
-    //        {
-    //            y = -y;
-    //        }
-    //        float x2 = (1.0 * a * b ) / sqrtf(1.0 * b * b + 1.0 * a * a * tanf(phiNew) * tanf(phiNew));
-    //        if (phiNew > PI / 2.0 && phiNew < 3 * PI / 2.0)
-    //        {
-    //            x2 = -x2;
-    //        }
-    //        float y2 = (1.0 * a * b ) / sqrtf(1.0 * a * a + 1.0 * b * b /(tanf(phiNew) * tanf(phiNew)));
-    //        if (phiNew > PI)
-    //        {
-    //            y2 = -y2;
-    //        }
-
-    //        float r = (sizeY * SIZE_X) / (2.0 * (sqrtf(SIZE_X * SIZE_X * sinf(phi) * sinf(phi) + sizeY * sizeY * cosf(phi) * cosf(phi)))),
-    //              rNew = (sizeY * SIZE_X) / (2.0 * (sqrtf(SIZE_X * SIZE_X * sinf(phiNew) * sinf(phiNew) + sizeY * sizeY * cosf(phiNew) * cosf(phiNew))));
-    //       // qDebug() << cos(phiNew) << phiNew << r << rNew << e;
-    //        QPointF points[4] = {
-    //            QPointF(centerX + x, centerY - y),
-    //            QPointF(centerX + x2, centerY - y2),
-    //            QPointF(0, 0),
-    //            QPointF(0, 0)
-    //        };
-    //        points[2].setX(points[1].x());
-    //        points[2].setY(points[1].y() - HEIGHT);
-    //        points[3].setX(points[0].x());
-    //        points[3].setY(points[0].y() - HEIGHT);
-            //painter.drawPie(QRect(OFFSET_X, offsetY, SIZE_X, sizeY), offset, curAngle * 16);
-    //        if (i < 33)
-    //        {
-    //            //qDebug() << points[0].x() << points[0].y() << points[1].x() << points[1].y() << x << y << x2 << y2;
-    //            //qDebug() << cos(phiNew) << phiNew << r << rNew << e;
-    //            //painter.drawPolygon(points, 4);
-    //            //    painter.drawLine(points[0], points[1]);
-
-    //        }
-
-            path.moveTo(lastArcPoint);
-            path.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), curAngles, curAngle);
+            path.moveTo(centerX - SIZE_X / 2.0, centerY);
+            float newAngle = curAngles + curAngle - 180;
+            path.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), 180, newAngle);
             auto start = path.currentPosition();
-            lastArcPoint = start;
-            //qDebug() << start.x() << start.y();
             //path.lineTo(start.x(), start.y() - HEIGHT);
-            path.arcTo(QRectF(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY), curAngles + curAngle, -curAngle);
+            path.arcTo(QRectF(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY), curAngles + curAngle, -newAngle);
             start = path.currentPosition();
-            //qDebug() << start.x() << start.y();
             path.lineTo(start.x(), start.y() + HEIGHT);
             painter.drawPath(path);
-
-            if (phi < PI && phiNew > PI)
-            {
-                QPainterPath path;
-                path.moveTo(centerX - SIZE_X / 2.0, centerY);
-                float newAngle = curAngles + curAngle - 180;
-                path.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), 180, newAngle);
-                auto start = path.currentPosition();
-                //path.lineTo(start.x(), start.y() - HEIGHT);
-                path.arcTo(QRectF(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY), curAngles + curAngle, -newAngle);
-                start = path.currentPosition();
-                path.lineTo(start.x(), start.y() + HEIGHT);
-                painter.drawPath(path);
-            }
-
-            curAngles += curAngle;
-            offset += curAngle * 16;
         }
 
-        offsetY -= HEIGHT;
-        for (size_t i = 0; i < langs.size(); ++i)
-        {
-            QBrush brush(curUsedColors[i]);
-            painter.setBrush(brush);
-            float curAngle = 360.0 * langs[i].GetPopulation() / maxPopulation;
-            painter.drawPie(QRect(OFFSET_X, offsetY, SIZE_X, sizeY), offset, curAngle * 16);
-            offset += curAngle * 16;
-        }
-
-        m_needRefresh = false;
+        curAngles += curAngle;
+        offset += curAngle * 16;
     }
+    offsetY -= HEIGHT;
+    offset = m_angleOffset * 16;
+    for (size_t i = 0; i < langs.size(); ++i)
+    {
+        QBrush brush(curUsedColors[i]);
+        painter.setBrush(brush);
+        float curAngle = 360.0 * langs[i].GetPopulation() / maxPopulation;
+        painter.drawPie(QRect(OFFSET_X, offsetY, SIZE_X, sizeY), offset, curAngle * 16);
+        offset += curAngle * 16;
+    }
+    offsetY += HEIGHT;
+    m_needRefresh = false;
 }
 
 QColor Diagram::NextColor()
@@ -169,5 +148,55 @@ QColor Diagram::NextColor()
 
 void Diagram::mousePressEvent(QMouseEvent *event)
 {
-    this->setWindowTitle(QString::number(event->x()) + " " + QString::number(event->y()));
+    if (event->button() == Qt::LeftButton)
+    {
+        m_isLeftPressed = true;
+        m_buttonPos = event->pos();
+        m_startAngleMouseDrag = m_angleOffset;
+        m_needAuto = false;
+    }
+
+    if (event->button() == Qt::RightButton)
+    {
+        m_isRightPressed = true;
+        m_buttonPos = event->pos();
+        m_startYSize = sizeY;
+    }
+}
+
+void Diagram::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        m_isLeftPressed = false;
+        m_needAuto = true;
+    }
+
+    if (event->button() == Qt::RightButton)
+    {
+        m_isRightPressed = false;
+    }
+}
+
+void Diagram::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_isLeftPressed)
+    {
+        m_angleOffset = m_startAngleMouseDrag + (event->x() - m_buttonPos.x()) / 8;
+    }
+
+    if (m_isRightPressed)
+    {
+        sizeY = m_startYSize + (event->y() - m_buttonPos.y()) / 6;
+        if (sizeY >= 125 && sizeY < 350)
+        {
+            offsetY = 250 - (sizeY - HEIGHT)/ 2;
+            centerX = OFFSET_X + SIZE_X / 2.0;
+            centerY = offsetY + sizeY / 2.0;
+        }
+        else
+        {
+            sizeY = m_startYSize;
+        }
+    }
 }
