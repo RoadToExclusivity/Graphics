@@ -4,6 +4,7 @@
 #include "math.h"
 #include <QDebug>
 #include <QMouseEvent>
+#include <QPixmap>
 
 #define PI 3.14159265
 
@@ -16,12 +17,16 @@ Diagram::Diagram(LanguageModel *model, QWidget *parent) :
     m_usedColors(),
     m_needRefresh(true),
     m_angleOffset(0),
-    lastArcPoint(),
-    m_isLeftPressed(false),
+    m_isMidPressed(false),
     m_isRightPressed(false),
     m_needAuto(true),
     m_startAngleMouseDrag(0),
-    m_startYSize(0)
+    m_startYSize(0),
+    m_timer(new QTimer(this)),
+    m_selectedSector(-1),
+    m_tipVisible(false),
+    m_mouseTipX(-1),
+    m_mouseTipY(-1)
 {
     ui->setupUi(this);
     setFixedSize(size());
@@ -40,23 +45,29 @@ Diagram::Diagram(LanguageModel *model, QWidget *parent) :
     offsetY = 250 - (sizeY - HEIGHT)/ 2;
     centerX = OFFSET_X + SIZE_X / 2.0;
     centerY = offsetY + sizeY / 2.0;
-    lastArcPoint = QPointF(centerX + SIZE_X / 2, centerY);
 
-    m_timer = new QTimer(this);
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
-    m_timer->start(100);
+    if (m_timer)
+    {
+        connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
+        m_timer->start(30);
+    }
 }
 
 Diagram::~Diagram()
 {
     delete ui;
+
+    if (m_timer)
+    {
+        delete m_timer;
+    }
 }
 
 void Diagram::animate()
 {
     if (m_needAuto)
     {
-        m_angleOffset += 10;
+        m_angleOffset += 1;
         if (m_angleOffset >= 360)
         {
             m_angleOffset -= 360;
@@ -70,62 +81,135 @@ void Diagram::paintEvent(QPaintEvent *event)
     QDialog::paintEvent(event);
 
     QPainter painter(this);
-    float offset = 0;
 
-    std::vector<QColor> curUsedColors;
-    float curAngles = m_angleOffset;
+    float curAnglesSum = NormalizeAngle(m_angleOffset);
     QPainterPath testPath;
     testPath.moveTo(QPointF(centerX + SIZE_X / 2, centerY));
-    testPath.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), 0, curAngles);
-    lastArcPoint = testPath.currentPosition();
+    testPath.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), 0, curAnglesSum);
+    QPointF lastArcPoint = testPath.currentPosition();
+
+    const QRectF lowArcRectangle(OFFSET_X, offsetY, SIZE_X, sizeY);
+    const QRectF highArcRectangle(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY);
+    std::vector<float> angles;
     for (size_t i = 0; i < langs.size(); ++i)
     {
-        QBrush brush(m_needRefresh ? NextColor() : m_usedColors[i]);
+        QColor color = m_needRefresh ? NextColor() : m_usedColors[i];
+        QBrush brush(i == m_selectedSector ? color.lighter() : color);
         painter.setBrush(brush);
-        curUsedColors.push_back(brush.color());
-        m_usedColors.push_back(brush.color());
-
-        float curAngle = 360.0 * langs[i].GetPopulation() / maxPopulation;
-        float phi = curAngles * PI / 180.0, phiNew = (curAngles + curAngle) * PI / 180.0;
-
-        QPainterPath path;
-        path.moveTo(lastArcPoint);
-        path.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), curAngles, curAngle);
-        auto start = path.currentPosition();
-        lastArcPoint = start;
-        path.arcTo(QRectF(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY), curAngles + curAngle, -curAngle);
-        start = path.currentPosition();
-        path.lineTo(start.x(), start.y() + HEIGHT);
-        painter.drawPath(path);
-
-        if (phi < PI && phiNew > PI)
+        if (m_needRefresh)
         {
-            QPainterPath path;
-            path.moveTo(centerX - SIZE_X / 2.0, centerY);
-            float newAngle = curAngles + curAngle - 180;
-            path.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), 180, newAngle);
-            auto start = path.currentPosition();
-            //path.lineTo(start.x(), start.y() - HEIGHT);
-            path.arcTo(QRectF(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY), curAngles + curAngle, -newAngle);
-            start = path.currentPosition();
-            path.lineTo(start.x(), start.y() + HEIGHT);
-            painter.drawPath(path);
+            m_usedColors.push_back(color);
         }
 
-        curAngles += curAngle;
-        offset += curAngle * 16;
-    }
-    offsetY -= HEIGHT;
-    offset = m_angleOffset * 16;
-    for (size_t i = 0; i < langs.size(); ++i)
-    {
-        QBrush brush(curUsedColors[i]);
-        painter.setBrush(brush);
         float curAngle = 360.0 * langs[i].GetPopulation() / maxPopulation;
-        painter.drawPie(QRect(OFFSET_X, offsetY, SIZE_X, sizeY), offset, curAngle * 16);
-        offset += curAngle * 16;
+        angles.push_back(curAngle);
+        float newAngleSum = curAnglesSum + curAngle;
+
+        if (curAnglesSum >= 0 && curAnglesSum < 180 && NormalizeAngle(newAngleSum) <= 180)
+        {
+            curAnglesSum = NormalizeAngle(newAngleSum);
+            continue;
+        }
+
+        QPainterPath path;
+        if (curAnglesSum < 180 && newAngleSum > 180)
+        {
+            path.moveTo(centerX - SIZE_X / 2.0, centerY);
+            float newAngle = newAngleSum > 360 ? 180 : (newAngleSum - 180);
+
+            path.arcTo(lowArcRectangle, 180, newAngle);
+            auto start = path.currentPosition();
+            lastArcPoint = start;
+            path.lineTo(start.x(), start.y() - HEIGHT);
+            if (newAngleSum > 360)
+            {
+                path.arcTo(highArcRectangle, 0, -180);
+            }
+            else
+            {
+                path.arcTo(highArcRectangle, newAngleSum, -newAngle);
+            }
+
+            start = path.currentPosition();
+            path.lineTo(start.x(), start.y() + HEIGHT);
+        }
+        else
+        {
+            if (curAnglesSum < 360 && newAngleSum >= 360)
+            {
+                path.moveTo(lastArcPoint);
+                float newAngle = curAnglesSum < 180 ? 180 : 360 - curAnglesSum;
+
+                path.arcTo(lowArcRectangle, curAnglesSum, newAngle);
+                auto start = path.currentPosition();
+                lastArcPoint = start;
+                path.lineTo(start.x(), start.y() - HEIGHT);
+                if (curAnglesSum < 180)
+                {
+                    path.arcTo(highArcRectangle, 0, -180);
+                }
+                else
+                {
+                    path.arcTo(highArcRectangle, 0, -newAngle);
+                }
+
+                start = path.currentPosition();
+                path.lineTo(start.x(), start.y() + HEIGHT);
+            }
+            else
+            {
+                path.moveTo(lastArcPoint);
+                path.arcTo(lowArcRectangle, curAnglesSum, curAngle);
+                auto start = path.currentPosition();
+                lastArcPoint = start;
+                path.lineTo(start.x(), start.y() - HEIGHT);
+                path.arcTo(highArcRectangle, newAngleSum, -curAngle);
+                start = path.currentPosition();
+                path.lineTo(start.x(), start.y() + HEIGHT);
+            }
+        }
+
+        painter.drawPath(path);
+        curAnglesSum = NormalizeAngle(newAngleSum);
     }
-    offsetY += HEIGHT;
+
+    float pieOffset = m_angleOffset * 16;
+
+    for (size_t i = 0; i < m_usedColors.size(); ++i)
+    {
+        QBrush brush(i == m_selectedSector ? m_usedColors[i].lighter() : m_usedColors[i]);
+        painter.setBrush(brush);
+        float curPieAngle = angles[i] * 16;
+        painter.drawPie(highArcRectangle, pieOffset, curPieAngle);
+        pieOffset += curPieAngle;
+    }
+
+    if (m_tipVisible)
+    {
+        painter.setBrush(Qt::black);
+        int dx = 50, dy = 100;
+        if (m_mouseTipX + dx + 100> size().width())
+        {
+            dx = size().width() - m_mouseTipX - 105;
+        }
+        if (m_mouseTipY - dy - 50 < 0)
+        {
+            dy = m_mouseTipY - 55;
+        }
+
+        QPointF startPoint(m_mouseTipX, m_mouseTipY), endPoint(m_mouseTipX + dx, m_mouseTipY - dy);
+        painter.drawLine(startPoint, endPoint);
+        painter.setBrush(Qt::white);
+        QRectF rect(m_mouseTipX + dx, m_mouseTipY - dy - 50, 100, 50);
+        painter.drawRect(rect);
+        painter.setPen(Qt::black);
+        painter.setFont(QFont("Arial", 12));
+        rect.setX(rect.x() + 5);
+        rect.setY(rect.y() + 5);
+        painter.drawText(rect, langs[m_selectedSector].GetLanguage() + "\n" +
+                         QString::number(langs[m_selectedSector].GetPopulation()));
+    }
+
     m_needRefresh = false;
 }
 
@@ -148,28 +232,58 @@ QColor Diagram::NextColor()
 
 void Diagram::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
+    if (!m_tipVisible && event->button() == Qt::MiddleButton)
     {
-        m_isLeftPressed = true;
+        m_isMidPressed = true;
         m_buttonPos = event->pos();
         m_startAngleMouseDrag = m_angleOffset;
         m_needAuto = false;
     }
 
-    if (event->button() == Qt::RightButton)
+    if (!m_tipVisible && event->button() == Qt::RightButton)
     {
         m_isRightPressed = true;
         m_buttonPos = event->pos();
         m_startYSize = sizeY;
     }
+
+    if (!m_isMidPressed && !m_isRightPressed && event->button() == Qt::LeftButton)
+    {
+        int x = event->x(), y = event->y();
+        QRgb color = grab().toImage().pixel(x, y);
+        bool ok = false;
+        for (size_t i = 0; i < m_usedColors.size(); ++i)
+        {
+            if (m_usedColors[i] == color)
+            {
+                m_selectedSector = i;
+                ok = true;
+                break;
+            }
+        }
+
+        if (!ok)
+        {
+            m_needAuto = true;
+            m_tipVisible = false;
+            m_selectedSector = -1;
+        }
+        else
+        {
+            m_needAuto = false;
+            m_tipVisible = true;
+            m_mouseTipX = x;
+            m_mouseTipY = y;
+        }
+    }
 }
 
 void Diagram::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
+    if (event->button() == Qt::MiddleButton)
     {
-        m_isLeftPressed = false;
-        m_needAuto = true;
+        m_isMidPressed = false;
+        m_needAuto = !m_tipVisible;
     }
 
     if (event->button() == Qt::RightButton)
@@ -180,23 +294,41 @@ void Diagram::mouseReleaseEvent(QMouseEvent *event)
 
 void Diagram::mouseMoveEvent(QMouseEvent *event)
 {
-    if (m_isLeftPressed)
+    if (m_isMidPressed)
     {
-        m_angleOffset = m_startAngleMouseDrag + (event->x() - m_buttonPos.x()) / 8;
+        m_angleOffset = m_startAngleMouseDrag + (event->x() - m_buttonPos.x()) / 5;
+        return;
     }
 
     if (m_isRightPressed)
     {
-        sizeY = m_startYSize + (event->y() - m_buttonPos.y()) / 6;
-        if (sizeY >= 125 && sizeY < 350)
+        int newSizeY = m_startYSize + (event->y() - m_buttonPos.y()) / 3;
+        if (newSizeY >= 150 && newSizeY <= 350)
         {
+            sizeY = newSizeY;
             offsetY = 250 - (sizeY - HEIGHT)/ 2;
-            centerX = OFFSET_X + SIZE_X / 2.0;
             centerY = offsetY + sizeY / 2.0;
         }
-        else
+
+        return;
+    }
+}
+
+float Diagram::NormalizeAngle(float angle)
+{
+    if (angle > 360)
+    {
+        int div = angle / 360;
+        angle -= 360 * div;
+    }
+    else
+    {
+        if (angle < 0)
         {
-            sizeY = m_startYSize;
+            int div = -angle / 360 + 1;
+            angle = 360 * div + angle;
         }
     }
+
+    return angle;
 }
