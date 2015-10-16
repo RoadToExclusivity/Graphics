@@ -42,7 +42,7 @@ void Painter::Paint(QPainter *painter, QPaintEvent *event, int elapsed)
     float dy = m_k * m_u * m_time + A * m_time * m_time / 2.0;
     if (m_k == -1)
     {
-        m_y = m_y + dy;
+        m_y = maxY + dy;
     }
     else
     {
@@ -50,7 +50,6 @@ void Painter::Paint(QPainter *painter, QPaintEvent *event, int elapsed)
     }
     m_curU = m_u + m_k * A * m_time;
 
-    qDebug() << k << m_time << m_y << m_u << m_curU;
     if (m_y > maxY)
     {
         m_y = maxY;

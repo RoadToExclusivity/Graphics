@@ -35,7 +35,8 @@ Diagram::Diagram(LanguageModel *model, QWidget *parent) :
     {
         auto indexRow = m_model->index(i, 0);
         auto indexCol = m_model->index(i, 1);
-        Language lang(m_model->data(indexRow, Qt::DisplayRole).toString(), m_model->data(indexCol, Qt::DisplayRole).toInt());
+        Language lang(m_model->data(indexRow, Qt::DisplayRole).toString(),
+                      m_model->data(indexCol, Qt::DisplayRole).toInt());
         maxPopulation += lang.GetPopulation();
         langs.push_back(lang);
     }
@@ -81,6 +82,7 @@ void Diagram::paintEvent(QPaintEvent *event)
     QDialog::paintEvent(event);
 
     QPainter painter(this);
+    painter.setRenderHints(QPainter::TextAntialiasing | QPainter::Antialiasing, true);
 
     float curAnglesSum = NormalizeAngle(m_angleOffset);
     QPainterPath testPath;
@@ -88,8 +90,8 @@ void Diagram::paintEvent(QPaintEvent *event)
     testPath.arcTo(QRectF(OFFSET_X, offsetY, SIZE_X, sizeY), 0, curAnglesSum);
     QPointF lastArcPoint = testPath.currentPosition();
 
-    const QRectF lowArcRectangle(OFFSET_X, offsetY, SIZE_X, sizeY);
-    const QRectF highArcRectangle(OFFSET_X, offsetY - HEIGHT, SIZE_X, sizeY);
+    QRectF startCircle(centerX - 10, centerY - 5, 20, 10);
+
     std::vector<float> angles;
     for (size_t i = 0; i < langs.size(); ++i)
     {
@@ -105,16 +107,25 @@ void Diagram::paintEvent(QPaintEvent *event)
         angles.push_back(curAngle);
         float newAngleSum = curAnglesSum + curAngle;
 
-        if (curAnglesSum >= 0 && curAnglesSum < 180 && NormalizeAngle(newAngleSum) <= 180)
+        if (curAnglesSum >= 0 && curAnglesSum < 180 && NormalizeAngle(newAngleSum) <= 180 || i >= 844)
         {
             curAnglesSum = NormalizeAngle(newAngleSum);
             continue;
         }
 
+        QPainterPath circlePath;
+        circlePath.arcTo(startCircle, 0, curAnglesSum);
+        QPointF circleStartPoint = circlePath.currentPosition();
+        float diffX = circleStartPoint.x() - centerX, diffY = circleStartPoint.y() - centerY;
+
+        QRectF lowArcRectangle(OFFSET_X + diffX,
+                                offsetY + diffY, SIZE_X - abs(diffX) / 2.0, sizeY - abs(diffY) / 2.0);
+        QRectF highArcRectangle(OFFSET_X + diffX,
+                                offsetY - HEIGHT + diffY , SIZE_X - abs(diffX) / 2.0, sizeY - abs(diffY) / 2.0);
         QPainterPath path;
         if (curAnglesSum < 180 && newAngleSum > 180)
         {
-            path.moveTo(centerX - SIZE_X / 2.0, centerY);
+            path.moveTo(centerX - SIZE_X / 2.0 - 10, centerY);
             float newAngle = newAngleSum > 360 ? 180 : (newAngleSum - 180);
 
             path.arcTo(lowArcRectangle, 180, newAngle);
@@ -170,18 +181,44 @@ void Diagram::paintEvent(QPaintEvent *event)
         }
 
         painter.drawPath(path);
+        //painter.drawPoint(circleStartPoint);
         curAnglesSum = NormalizeAngle(newAngleSum);
     }
 
     float pieOffset = m_angleOffset * 16;
+    float angleSum = m_angleOffset;
+    QRectF startCircleQ(centerX - 10, centerY - 5 - HEIGHT, 20, 10);
 
+    painter.drawEllipse(startCircleQ);
     for (size_t i = 0; i < m_usedColors.size(); ++i)
     {
+        QPainterPath circlePath;
+        circlePath.arcTo(startCircle, 0, angleSum);
+        QPointF circleStartPoint = circlePath.currentPosition();
+        float diffX = circleStartPoint.x() - centerX, diffY = circleStartPoint.y() - centerY;
+        QRectF highArcRectangle(OFFSET_X + diffX,
+                                offsetY - HEIGHT + diffY, SIZE_X - abs(diffX) /  2.0, sizeY - abs(diffY) / 2.0);
         QBrush brush(i == m_selectedSector ? m_usedColors[i].lighter() : m_usedColors[i]);
         painter.setBrush(brush);
         float curPieAngle = angles[i] * 16;
-        painter.drawPie(highArcRectangle, pieOffset, curPieAngle);
+        //if (i < 3)
+        {
+            painter.drawPoint(circleStartPoint);
+            painter.drawPie(highArcRectangle, pieOffset, curPieAngle);
+
+            QBrush brus(Qt::transparent);
+            painter.setBrush(brus);
+           //painter.drawRect(highArcRectangle);
+            //painter.drawPie(highArcRectangle, pieOffset, curPieAngle);
+
+        }
+
         pieOffset += curPieAngle;
+        angleSum += angles[i];
+        if (angleSum >= 360)
+        {
+            angleSum -= 360;
+        }
     }
 
     if (m_tipVisible)
@@ -330,5 +367,5 @@ float Diagram::NormalizeAngle(float angle)
         }
     }
 
-    return angle;
+    return angle >= 0 && angle <= 360 ? angle : NormalizeAngle(angle);
 }
