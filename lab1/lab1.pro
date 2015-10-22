@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = lab1
 TEMPLATE = app
-TRANSLATIONS = lab1_ru.ts
+TRANSLATIONS += lab1_ru_RU.ts
 
 CONFIG += c++11
 

@@ -76,6 +76,9 @@
    <property name="text">
     <string>Population</string>
    </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QSpinBox" name="spinBox">
    <property name="geometry">

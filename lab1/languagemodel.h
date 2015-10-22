@@ -8,6 +8,7 @@
 
 class LanguageModel : public QAbstractTableModel
 {
+    Q_OBJECT;
 public:
     LanguageModel(QUndoStack *stack, QAction *save, QObject *parent = 0);
     int rowCount(const QModelIndex &) const;
